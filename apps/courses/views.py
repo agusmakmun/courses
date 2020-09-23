@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import (get_object_or_404, redirect)
 from django.views.generic import (ListView, DetailView)
 
-from apps.courses.models.course import (Course, Exercise)
+from apps.courses.models.course import (Course, Exercise, Answer)
 
 
 class CourseListView(ListView):
@@ -27,4 +27,16 @@ class CourseDetailView(DetailView):
 
     def get_object(self):
         queries = {'slug': self.kwargs['slug'], 'deleted_at__isnull': True}
+        return get_object_or_404(self.model, **queries)
+
+
+class ExerciseDetailView(DetailView):
+    template_name = 'apps/courses/exercise.html'
+    context_object_name = 'exercise'
+    model = Exercise
+
+    def get_object(self):
+        queries = {'course__slug': self.kwargs['slug'],
+                   'id': self.kwargs['id'],
+                   'deleted_at__isnull': True}
         return get_object_or_404(self.model, **queries)

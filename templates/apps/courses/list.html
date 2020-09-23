@@ -10,28 +10,30 @@
         {% for course in courses %}
           <div class="col-md-4 mb-5">
             <div class="card text-center no-radius card-shadow">
-              <div class="course-image" style="max-height:200px;overflow:hidden">
-                <img src="{{ course.cover.url }}" class="d-block w-100" alt="{{ course.title }}">
-              </div>
+              <a class="no-underline" href="{% url 'apps.courses:course_detail' slug=course.slug %}" style="color:#333">
+                <div class="course-image" style="max-height:200px;overflow:hidden">
+                  <img src="{{ course.cover.url }}" class="d-block w-100" alt="{{ course.title }}">
+                </div>
 
-              <div class="card-header border-bottom-0" style="background:#ffffff linear-gradient(180deg,#fbfbfb,#ffffff) repeat-x!important">
-                <h5 class="my-0 font-weight-normal">{{ course.title }}</h5>
-              </div>
+                <div class="card-header border-bottom-0" style="background:#ffffff linear-gradient(180deg,#fbfbfb,#ffffff) repeat-x!important">
+                  <h5 class="my-0 font-weight-normal">{{ course.title }}</h5>
+                </div>
 
-              <div class="card-body pt-0">
-                <small class="text-muted">{{ course.created_at }}</small>
-                <p class="card-text">{{ course.overview|striptags|truncatechars:"90" }}</p>
-              </div>
+                <div class="card-body pt-0">
+                  <small class="text-muted">{{ course.created_at }}</small>
+                  <p class="card-text">{{ course.overview|striptags|truncatechars:"90" }}</p>
+                </div>
 
-              <div class="card-footer">
-                <a href="{% url 'apps.courses:course_detail' slug=course.slug %}" class="btn btn-block bg-gradient-default text-normal">
-                  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-eye-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
-                    <path fill-rule="evenodd" d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
-                  </svg>
-                  <span>&nbsp;{% trans "Read more" %}&nbsp;</span>
-                </a>
-              </div>
+                <div class="card-footer">
+                  <a href="{% url 'apps.courses:course_detail' slug=course.slug %}" class="btn btn-block bg-gradient-default text-normal">
+                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-eye-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                      <path fill-rule="evenodd" d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                    </svg>
+                    <span>&nbsp;{% trans "Read more" %}&nbsp;</span>
+                  </a>
+                </div>
+              </a>
             </div>
           </div>
         {% empty %}

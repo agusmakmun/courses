@@ -523,7 +523,7 @@ h1,h2,h3,h4,h5,h6 {
 
 
 /* Form */
-.form-important {
+.div-important {
   background: #f9f9f9;
   padding: 7px 10px;
   border: 1px dashed #ddd;

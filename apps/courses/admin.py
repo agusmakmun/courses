@@ -13,7 +13,7 @@ class CourseAdmin(admin.ModelAdmin):
 
 
 class ExerciseAdmin(admin.ModelAdmin):
-    list_display = ('course', '__str__', 'created_at', 'updated_at', 'deleted_at')
+    list_display = ('course', 'order', '__str__', 'created_at', 'updated_at', 'deleted_at')
     list_filter = ('created_at', 'updated_at', 'deleted_at')
 
 

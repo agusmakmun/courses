@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% load common_tags %}
+
+{% block title %}{{ course.title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+  <div class="container p-3">
+    <section class="jumbotron text-center mb-0 no-radius bg-gradient-default-soft">
+      <div class="container">
+        <h1 class="text-bold">{{ course.title }}</h1>
+        <p>
+          <a href="#" class="btn bg-gradient-success my-2">
+            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+            </svg>
+            <span>{% trans "Resume" %}&nbsp;</span>
+          </a>
+        </p>
+      </div>
+    </section>
+
+    <div class="card no-border card-shadow">
+      <div class="card-body">
+        <h2 class="text-bold">{% trans "Overview" %}</h2>
+        <div class="overview">
+          {{ course.overview|safe }}
+        </div>
+
+        <h4 class="text-bold mt-3">{% trans "Description" %}</h4>
+        <div class="description">
+          {{ course.description|safe }}
+        </div>
+      </div>
+    </div>
+
+    <h2 class="text-center text-bold mt-5 mb-3">{% trans "WHAT YOU'LL LEARN" %}</h2>
+    <div class="card no-border card-shadow">
+      <div class="card-body">
+        <div class="list-group">
+          {% for exercise in course.exercise_set.published %}
+            <div class="list-group-item no-radius">
+              <div class="row">
+                <div class="col-md-1">
+                  <h2 class="text-center m-0" style="line-height:3rem">{{ forloop.counter }}</h2>
+                </div>
+                <div class="col-md-8">
+                  <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                      <a href="{% url 'apps.courses:exercise_detail' slug=course.slug id=exercise.id %}" class="no-underline">{{ exercise.title }}</a>
+                    </h5>
+                  </div>
+                  <p class="mb-1">{{ exercise.sort_description }}</p>
+                </div>
+                <div class="col-md-3">
+                  <div class="mt-1">
+                    <a href="{% url 'apps.courses:exercise_detail' slug=course.slug id=exercise.id %}" class="btn btn-block bg-gradient-primary no-underline">
+                      <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                      </svg>
+                      <span>{% trans "Start" %}</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="list-group-item">
+              <span>{% trans "There is no exercise yet!" %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
+{% block js %}
+  <script>
+
+  </script>
+{% endblock %}

@@ -37,7 +37,9 @@ class Course(TimeStampedModel):
 class Exercise(TimeStampedModel):
     id = models.BigAutoField(primary_key=True)
     title = models.CharField(_('Title'), max_length=200)
+    order = models.PositiveIntegerField(_('Order'), default=1)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    sort_description = models.TextField(_('Sort Description'))
     description = models.TextField(_('Description'))
 
     objects = CustomManager()
@@ -46,7 +48,7 @@ class Exercise(TimeStampedModel):
         return self.title
 
     class Meta:
-        ordering = ('-id',)
+        ordering = ('order',)
 
 
 class Answer(TimeStampedModel):
