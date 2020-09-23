@@ -13,8 +13,8 @@ class Course(TimeStampedModel):
     id = models.BigAutoField(primary_key=True)
     title = models.CharField(_('Title'), max_length=200)
     slug = models.SlugField(_('Slug'), max_length=200, unique=True)
-    # cover = models.ImageField(_('Cover'), upload_to='covers/%Y/%m/%d',
-    #                           null=True, blank=True)
+    cover = models.ImageField(_('Cover'), upload_to='covers/%Y/%m/%d',
+                              null=True, blank=True)
     overview = models.TextField(_('Overview'))
     description = models.TextField(_('Course Description'), blank=True)
 
