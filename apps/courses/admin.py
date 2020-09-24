@@ -14,9 +14,14 @@ class CourseAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ['title']}
 
 
+class AnswerInline(admin.TabularInline):
+    model = Answer
+
+
 class ExerciseAdmin(admin.ModelAdmin):
-    list_display = ('course', 'order', '__str__', 'created_at', 'updated_at', 'deleted_at')
+    list_display = ('title', 'course', 'order', 'created_at', 'updated_at', 'deleted_at')
     list_filter = ('created_at', 'updated_at', 'deleted_at')
+    inlines = [AnswerInline, ]
     formfield_overrides = {
         models.TextField: {'widget': AdminMartorWidget},
     }

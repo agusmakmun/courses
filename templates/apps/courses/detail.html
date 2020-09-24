@@ -6,17 +6,20 @@
 
 {% block content %}
   <div class="container p-3">
-    <section class="jumbotron text-center mb-0 no-radius bg-gradient-default-soft">
+    <section class="jumbotron text-center mb-0 no-radius bg-gradient-blue-soft">
       <div class="container">
-        <h1 class="text-bold">{{ course.title }}</h1>
-        <p>
-          <a href="#" class="btn bg-gradient-success my-2">
-            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
-            </svg>
-            <span>{% trans "Resume" %}&nbsp;</span>
-          </a>
-        </p>
+        <h1 class="text-bold" style="text-shadow:0 0 3px #fff">{{ course.title }}</h1>
+
+        {% if resume_exercise_id %}
+          <p>
+            <a href="{% url 'apps.courses:exercise_detail' slug=course.slug id=resume_exercise_id %}" class="btn bg-gradient-success my-2" style="box-shadow:0 0 5px #4f9bea;border:1px solid #58a6f7">
+              <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+              </svg>
+              <span>{% trans "Resume" %}&nbsp;</span>
+            </a>
+          </p>
+        {% endif %}
       </div>
     </section>
 
@@ -38,7 +41,7 @@
     <div class="card no-border card-shadow">
       <div class="card-body">
         <div class="list-group">
-          {% for exercise in course.exercise_set.published %}
+          {% for exercise in course.get_exercises %}
             <div class="list-group-item no-radius">
               <div class="row">
                 <div class="col-md-1">

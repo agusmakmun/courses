@@ -223,6 +223,10 @@ h1,h2,h3,h4,h5,h6 {
   background: #fbf4d6 linear-gradient(180deg,#fffefc,#fdf5d5) repeat-x!important;
   color: #8a7628;
 }
+.bg-gradient-blue-soft {
+  background: #ffffff00 linear-gradient(180deg,#ffffff00,#007dff) repeat-x!important;
+  color: #3a3939;
+}
 
 /* Ribbon */
 .ribbon-wrapper-orange {

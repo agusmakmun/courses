@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import re
+
 from django.urls import reverse
 from django.conf import settings
 from django.utils import timezone
@@ -35,6 +37,22 @@ class CourseDetailView(DetailView):
         queries = {'slug': self.kwargs['slug'], 'deleted_at__isnull': True}
         return get_object_or_404(self.model, **queries)
 
+    def get_resume_exercise_id(self):
+        session = self.request.session
+        if 'resume_exercise_id' in session:
+            return session.get('resume_exercise_id')
+
+        exercise = self.object.get_exercises().first()
+        if exercise is not None:
+            session['resume_exercise_id'] = exercise.id
+            return session.get('resume_exercise_id')
+        return None
+
+    def get_context_data(self, *args, **kwargs):
+        context_data = super().get_context_data(*args, **kwargs)
+        context_data['resume_exercise_id'] = self.get_resume_exercise_id()
+        return context_data
+
 
 class ExerciseDetailView(DetailView):
     template_name = 'apps/courses/exercise.html'
@@ -47,6 +65,12 @@ class ExerciseDetailView(DetailView):
                    'deleted_at__isnull': True}
         return get_object_or_404(self.model, **queries)
 
+    def get_context_data(self, *args, **kwargs):
+        context_data = super().get_context_data(*args, **kwargs)
+        context_data['next_exercise'] = None
+        context_data['prev_exercise'] = None
+        return context_data
+
 
 class UserAnswerView(APIView):
     allowed_methods = ('post',)
@@ -54,12 +78,24 @@ class UserAnswerView(APIView):
     serializer_class = UserAnswerSerializer
 
     def validate_answer(self, exercise_id, user_answer):
+        """
+        function to makesure that `user_answer` is correct.
+        :param `exercise_id` is integer id of exercise.
+        :param `user_answer` is string user answer.
+        :return bool <True/False>
+        """
         exercise = Exercise.objects.get_or_none(id=exercise_id)
         if exercise and user_answer:
             if isinstance(user_answer, str):
                 correct_answers = exercise.answer_set.published()
-                for correct_answer in correct_answers:
-                    if correct_answer.answer in user_answer:
+                for canswer in correct_answers:
+                    correct_answer = canswer.answer.replace('\r', '')
+                    user_answer = user_answer.replace('\r', '')
+
+                    if correct_answer in user_answer:
+                        # assign into newest session
+                        self.request.session['resume_exercise_id'] = exercise.id
+
                         return True
         return False
 

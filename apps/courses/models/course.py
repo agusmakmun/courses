@@ -20,6 +20,11 @@ class Course(TimeStampedModel):
 
     objects = CustomManager()
 
+    def get_exercises(self):
+        if hasattr(self, 'exercise_set'):
+            return self.exercise_set.published().order_by('order')
+        return self.__class__.objects.none()
+
     def __str__(self):
         return self.title
 
@@ -40,15 +45,34 @@ class Exercise(TimeStampedModel):
     order = models.PositiveIntegerField(_('Order'), default=1)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     sort_description = models.TextField(_('Sort Description'))
-    description = models.TextField(_('Description'))
+    long_description = models.TextField(_('Long Description'))
+    initial_script = models.TextField(_('Initial Script'), blank=True)
 
     objects = CustomManager()
 
     def __str__(self):
         return self.title
 
+    def get_related_exercises(self):
+        return self.__class__.objects.published()\
+                                     .filter(course=self.course)
+
+    def get_prev_exercise(self):
+        """ function to get the previous exercise by order """
+        return self.get_related_exercises()\
+                   .filter(order__lt=self.order)\
+                   .order_by('-order')\
+                   .first()
+
+    def get_next_exercise(self):
+        """ function to get the next exercise by order """
+        return self.get_related_exercises()\
+                   .filter(order__gt=self.order)\
+                   .order_by('-order')\
+                   .first()
+
     class Meta:
-        ordering = ('order',)
+        ordering = ('-id',)
 
 
 class Answer(TimeStampedModel):
