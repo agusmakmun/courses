@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 
 from apps.courses.models.course import (Course, Exercise, Answer)
 from apps.courses.serializers import UserAnswerSerializer
+from apps.tools.python.cleaner import clean_code
 from apps.tools.python.exec import sandbox
 
 
@@ -81,12 +82,13 @@ class UserAnswerView(APIView):
         exercise = Exercise.objects.get_or_none(id=exercise_id)
         if exercise and user_answer:
             if isinstance(user_answer, str):
+                user_answer_clean = clean_code(user_answer.replace('\r', ''))
                 correct_answers = exercise.answer_set.published()
                 for canswer in correct_answers:
                     correct_answer = canswer.answer.replace('\r', '')
-                    user_answer = user_answer.replace('\r', '')
+                    correct_answer_clean = clean_code(correct_answer)
 
-                    if correct_answer == user_answer:
+                    if correct_answer_clean == user_answer_clean:
                         # assign into newest session
                         self.request.session['resume_exercise_id'] = exercise.id
 
