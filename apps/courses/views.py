@@ -16,6 +16,7 @@ from rest_framework.views import APIView
 
 from apps.courses.models.course import (Course, Exercise, Answer)
 from apps.courses.serializers import UserAnswerSerializer
+from apps.tools.python.exec import sandbox
 
 
 class CourseListView(ListView):
@@ -55,9 +56,14 @@ class UserAnswerView(APIView):
     def post(self, request, format=None):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        user_code = serializer.data.get('user_answer')
+        exercise_id = serializer.data.get('exercise_id')
+        response_sandbox_code = sandbox(user_code)  # {'success': <bool>, 'result': ''}
+
         response = {
             'status': status.HTTP_200_OK,
-            'result': serializer.data,
+            'result': response_sandbox_code,
             'message': _('Success'),
             'success': True
         }

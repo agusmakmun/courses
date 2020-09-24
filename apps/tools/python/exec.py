@@ -1,68 +1,97 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-# dependency
-# pip install RestrictedPython
-# https://stackoverflow.com/a/63161071/6396981
 
-from RestrictedPython import safe_builtins, compile_restricted
-from RestrictedPython.Eval import default_guarded_getitem
+import os
+import sys
+import traceback
+import contextlib
+from io import StringIO
+from threading import Thread
 
-from apps.tools.python.restricts import (_import, _getiter)
 
-
-def execute_user_code(user_code, user_func, *args, **kwargs):
-    """ Executed user code in restricted env
-        Args:
-            user_code(str) - String containing the unsafe code
-            user_func(str) - Function inside user_code to execute and return value
-            *args, **kwargs - arguments passed to the user function
-        Return:
-            Return value of the user_func
+@contextlib.contextmanager
+def stdoutIO(stdout=None):
     """
+    function to get the print output in an exec statement.
+    https://stackoverflow.com/a/3906390/6396981
+    """
+    old = sys.stdout
+    if stdout is None:
+        stdout = StringIO()
+    sys.stdout = stdout
+    yield stdout
+    sys.stdout = old
 
-    def _apply(f, *a, **kw):
-        return f(*a, **kw)
+
+def secure_builtins(obj):
+    to_delete = ['quit', 'exit', 'system']
+    for func in to_delete:
+        try:
+            del obj.__builtins__[func]
+        except:
+            pass
+    return obj
+
+
+def sandbox(to_exec):
+    """
+    function to exec the user python scripts.
+    https://repl.it/@mat1/sandbox-exec#main.py
+    https://trypython.jcubic.pl/ (TODO: TRY THIS)
+
+    :param `to_exec` is string to execute.
+    :return {'success': <bool>, 'result': <None>}
+
+    >>> to_exec = '''
+        print('hi')
+        '''
+    >>> sandbox(to_exec)
+    'hi'
+    """
+    response = {'success': False, 'result': None}
+    allowed_methods = ['math', 'random']
+    sys_modules = dict(sys.modules)
 
     try:
-        # This is the variables we allow user code to see. @result will contain return value.
-        restricted_locals = {
-            "result": None,
-            "args": args,
-            "kwargs": kwargs,
-        }
+        code = compile(to_exec, 'sandbox', 'exec')
+    except Exception as error:
+        return ('Error compiling')
+    else:
+        with stdoutIO() as s:
+            try:
+                sandbox_global = dict(globals())
+                del sandbox_global['Thread']
+                fix_modules = ['os', 'sys']
 
-        # If you want the user to be able to use some of your functions inside his code,
-        # you should add this function to this dictionary.
-        # By default many standard actions are disabled. Here I add _apply_ to be able to access
-        # args and kwargs and _getitem_ to be able to use arrays. Just think before you add
-        # something else. I am not saying you shouldn't do it. You should understand what you
-        # are doing thats all.
+                for i in fix_modules:
+                    sandbox_global[i] = secure_builtins(sandbox_global[i])
 
-        safe_builtins['__import__'] = _import  # Must be a part of builtins
+                to_delete = []
+                for module in sys_modules:
+                    if module not in allowed_methods:
+                        del sys.modules[module]
 
-        restricted_globals = {
-            "__builtins__": safe_builtins,
-            "_getitem_": default_guarded_getitem,
-            "_getiter_": _getiter,
-            "_apply_": _apply,
-        }
+                exec(code, sandbox_global, {})
+                result = s.getvalue().strip() or None
+                response.update({'success': True, 'result': result})
 
-        # Add another line to user code that executes @user_func
-        user_code += "\nresult = {0}(*args, **kwargs)".format(user_func)
+                # re-update the original modules
+                sys.modules = sys_modules
 
-        # Compile the user code
-        byte_code = compile_restricted(user_code, filename="<user_code>", mode="exec")
+                return response
 
-        # Run it
-        exec(byte_code, restricted_globals, restricted_locals)
+            except Exception as error:
+                # print('error executing:', error, type(error), sys.exc_info()[-1].tb_lineno)
+                # error_message = str(traceback.format_exc(chain=False))
+                # response.update({'result': error_message})
 
-        # User code has modified result inside restricted_locals. Return it.
-        return restricted_locals["result"]
+                cass_name = type(error).__name__
+                message = str(error)
+                error_message = '%s: %s' % (cass_name, message)
+                response.update({'result': error_message})
 
-    except SyntaxError as e:
-        # Do whaever you want if the user has code that does not compile
-        raise
-    except Exception as e:
-        # The code did something that is not allowed. Add some nasty punishment to the user here.
-        raise
+    # re-update the original modules
+    sys.modules = sys_modules
+
+    return response
