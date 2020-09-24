@@ -65,12 +65,6 @@ class ExerciseDetailView(DetailView):
                    'deleted_at__isnull': True}
         return get_object_or_404(self.model, **queries)
 
-    def get_context_data(self, *args, **kwargs):
-        context_data = super().get_context_data(*args, **kwargs)
-        context_data['next_exercise'] = None
-        context_data['prev_exercise'] = None
-        return context_data
-
 
 class UserAnswerView(APIView):
     allowed_methods = ('post',)
@@ -92,7 +86,7 @@ class UserAnswerView(APIView):
                     correct_answer = canswer.answer.replace('\r', '')
                     user_answer = user_answer.replace('\r', '')
 
-                    if correct_answer in user_answer:
+                    if correct_answer == user_answer:
                         # assign into newest session
                         self.request.session['resume_exercise_id'] = exercise.id
 
@@ -106,7 +100,7 @@ class UserAnswerView(APIView):
         exercise_id = serializer.data.get('exercise_id')
         user_code = serializer.data.get('user_answer')
 
-        response_sandbox = sandbox(user_code)  # {'success': <bool>, 'result': ''}
+        response_sandbox = sandbox(user_code)  # {'success': <bool>, 'result': None}
         valid_answer = self.validate_answer(exercise_id, user_code)
         is_correct = all([response_sandbox.get('success'), valid_answer])
         message = _('Success') if is_correct else _('Failed')
