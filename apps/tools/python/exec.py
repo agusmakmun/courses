@@ -56,7 +56,12 @@ def sandbox(to_exec):
     try:
         code = compile(to_exec, 'sandbox', 'exec')
     except Exception as error:
-        return ('Error compiling')
+        # Error Compiling
+        cass_name = type(error).__name__
+        message = str(error)
+        error_message = '%s: %s' % (cass_name, message)
+        response.update({'result': error_message})
+
     else:
         with stdoutIO() as s:
             try:
@@ -67,10 +72,12 @@ def sandbox(to_exec):
                 for i in fix_modules:
                     sandbox_global[i] = secure_builtins(sandbox_global[i])
 
-                to_delete = []
-                for module in sys_modules:
-                    if module not in allowed_methods:
-                        del sys.modules[module]
+                # FIXME: when I uncomment this, it will causing an error
+                # to another case, because `del` in sys.modules
+                # to_delete = []
+                # for module in sys_modules:
+                #     if module not in allowed_methods:
+                #         del sys.modules[module]
 
                 exec(code, sandbox_global, {})
                 result = s.getvalue().strip() or None

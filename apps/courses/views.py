@@ -53,18 +53,32 @@ class UserAnswerView(APIView):
     permission_classes = (permissions.AllowAny,)  # just for test
     serializer_class = UserAnswerSerializer
 
+    def validate_answer(self, exercise_id, user_answer):
+        exercise = Exercise.objects.get_or_none(id=exercise_id)
+        if exercise and user_answer:
+            if isinstance(user_answer, str):
+                correct_answers = exercise.answer_set.published()
+                for correct_answer in correct_answers:
+                    if correct_answer.answer in user_answer:
+                        return True
+        return False
+
     def post(self, request, format=None):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user_code = serializer.data.get('user_answer')
         exercise_id = serializer.data.get('exercise_id')
-        response_sandbox_code = sandbox(user_code)  # {'success': <bool>, 'result': ''}
+        user_code = serializer.data.get('user_answer')
+
+        response_sandbox = sandbox(user_code)  # {'success': <bool>, 'result': ''}
+        valid_answer = self.validate_answer(exercise_id, user_code)
+        is_correct = all([response_sandbox.get('success'), valid_answer])
+        message = _('Success') if is_correct else _('Failed')
 
         response = {
             'status': status.HTTP_200_OK,
-            'result': response_sandbox_code,
-            'message': _('Success'),
-            'success': True
+            'result': response_sandbox.get('result'),
+            'message': message,
+            'success': is_correct
         }
         return Response(response, status=response.get('status'))
