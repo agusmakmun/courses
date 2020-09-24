@@ -25,7 +25,9 @@ urlpatterns = [
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
     path('i18n/', include('django.conf.urls.i18n')),
 
+    path('martor/', include('martor.urls')),
     path('accounts/', include('allauth.urls')),
+
     path('', include('apps.courses.urls')),
 ]
 

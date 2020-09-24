@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.db import models
 from django.contrib import admin
 
+from martor.widgets import AdminMartorWidget
 from apps.courses.models.course import (Course, Exercise, Answer)
 
 
@@ -15,6 +17,9 @@ class CourseAdmin(admin.ModelAdmin):
 class ExerciseAdmin(admin.ModelAdmin):
     list_display = ('course', 'order', '__str__', 'created_at', 'updated_at', 'deleted_at')
     list_filter = ('created_at', 'updated_at', 'deleted_at')
+    formfield_overrides = {
+        models.TextField: {'widget': AdminMartorWidget},
+    }
 
 
 class AnswerAdmin(admin.ModelAdmin):

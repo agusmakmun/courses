@@ -325,54 +325,13 @@ h1,h2,h3,h4,h5,h6 {
   border-color: #dee2e6 #dee2e6 #fff;
 }
 
-/* Statistic */
-.stats {
-  position: relative;
-  -webkit-box-flex: 0;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
-  flex: 0 0 auto;
-  display: block;
-  float: none;
-  margin: 0;
-  padding: 0;
-  max-height: '';
-  -webkit-align-self: top;
-  -ms-flex-item-align: top;
-  align-self: top;
-  /* margin-right: 1em; */
-}
-.stats>.votes {
-  border-radius: 3px 3px 0 0;
-  -ms-border-radius: 3px 3px 0 0;
-  -moz-border-radius: 3px 3px 0 0;
-  -webkit-border-radius: 3px 3px 0 0;
-  background: #f5f5f5;
-}
-.stats>.views {
-  border-radius: 0 0 3px 3px;
-  -ms-border-radius: 0 0 3px 3px;
-  -moz-border-radius: 0 0 3px 3px;
-  -webkit-border-radius: 0 0 3px 3px;
-  color: #666;
-  background: #e8e8e8;
-}
-.stats>.stats-inside {
-  padding: 10px;
-  text-align: center;
-}
-.stats>.stats-inside .label {
-  font-size: 10px!important;
-}
-.stats .vote-up,
-.stats .vote-down,
-.stats .vote-favorite {
-  cursor: pointer;
-}
-.stats .vote-up:hover,
-.stats .vote-down:hover,
-.stats .vote-favorite:hover {
-  color: #F2711C!important;
+.overflow-y {
+  width: 600px;
+  height: 100%;
+  max-height: 800px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 1rem;
 }
 
 /* Cards */

@@ -1,0 +1,49 @@
+{% load static i18n %}<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns#">
+<head>
+  <meta charset="UTF-8">
+  <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}">
+
+  {% block robot %}
+  <meta name="robots" content="noodp, noydir"/>
+  {% endblock %}
+
+  <title>{% block title %}Courses{% endblock %}</title>
+  <link rel="canonical" href="https://courses.python.web.id{% block canonical %}{% endblock %}">
+
+  {% block seo %}
+  <meta name="description" content="Python Courses">
+  <meta name="author" content="Summon Agus">
+  <meta name="keywords" content="Learning, Python, Django, Python">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Courses">
+  <meta property="og:description" content="Python Courses">
+  <meta property="og:url" content="https://https://courses.python.web.id">
+  <meta property="og:image" content="https://https://courses.python.web.id{% static 'images/medium-logo-orange.png' %}">
+  <meta property="og:site_name" content="https://courses.python.web.id" >
+  {% endblock %}
+
+  {% block core_css %}
+  <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" media="all">
+  {% endblock %}
+
+  <link href="{% static 'css/courses.css' %}" rel="stylesheet" media="all">
+  {% block css %}{% endblock %}
+
+</head>
+
+<body>
+  <div class="main-container">
+    {% block content %}{% endblock %}
+  </div>
+
+  <script src="{% static 'plugins/js/jquery.min.js' %}"></script>
+  <script src="{% static 'plugins/js/popper.min.js' %}"></script>
+  <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'plugins/js/notify.min.js' %}"></script>
+  <script src="{% static 'js/courses.js' %}"></script>
+
+  {% block js %}{% endblock %}
+</body>
+</html>
