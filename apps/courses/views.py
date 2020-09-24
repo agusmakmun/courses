@@ -10,7 +10,12 @@ from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import (get_object_or_404, redirect)
 from django.views.generic import (ListView, DetailView)
 
+from rest_framework import (status, permissions)
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from apps.courses.models.course import (Course, Exercise, Answer)
+from apps.courses.serializers import UserAnswerSerializer
 
 
 class CourseListView(ListView):
@@ -40,3 +45,20 @@ class ExerciseDetailView(DetailView):
                    'id': self.kwargs['id'],
                    'deleted_at__isnull': True}
         return get_object_or_404(self.model, **queries)
+
+
+class UserAnswerView(APIView):
+    allowed_methods = ('post',)
+    permission_classes = (permissions.AllowAny,)  # just for test
+    serializer_class = UserAnswerSerializer
+
+    def post(self, request, format=None):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        response = {
+            'status': status.HTTP_200_OK,
+            'result': serializer.data,
+            'message': _('Success'),
+            'success': True
+        }
+        return Response(response, status=response.get('status'))
