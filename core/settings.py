@@ -62,6 +62,11 @@ INSTALLED_APPS = [
     'martor',
     'corsheaders',
     'rest_framework',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.github',
+    'allauth.socialaccount.providers.linkedin',
 
     # major apps
     'apps.courses',
@@ -136,9 +141,53 @@ CACHES = {
     }
 }
 
+
+# [NOT USED YET]
+# Custom Auth User Model
+AUTH_USER_MODEL = 'auth.User'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+
+    # custom auth backend
+    # 'apps.accounts.utils.backends.CustomAuthBackend'
+]
+
+
+# Auth and allauth settings
+# ACCOUNT_FORMS = {
+#     'signup': 'apps.accounts.forms.auth.SignUpForm',
+#     'login': 'apps.accounts.forms.auth.LoginForm',
+#     'reset_password': 'apps.accounts.forms.auth.ResetPasswordForm'
+# }
+
+
+EMAIL_REQUIRED = True  # allauth
+LOGIN_REDIRECT_URL = '/'
+SOCIALACCOUNT_QUERY_EMAIL = True
+ACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_PROVIDERS = {
+    'github': {
+        'SCOPE': ['user:email', ]
+    },
+    'linkedin': {
+        'SCOPE': ['r_emailaddress'],
+        'PROFILE_FIELDS': [
+            'id',
+            'first-name',
+            'last-name',
+            'email-address',
+            'picture-url',
+            'public-profile-url'
+        ]
+    }
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -195,7 +244,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Django Cors Header
 # Only enable CORS for specified domains
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ORIGIN_WHITELIST = [(
+CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://localhost:8000',
     'http://localhost:8080',
@@ -203,11 +252,11 @@ CORS_ORIGIN_WHITELIST = [(
     'https://courses.python.web.id',
 ]
 
-CORS_ALLOWED_ORIGIN_REGEXES=[
+CORS_ALLOWED_ORIGIN_REGEXES = [
     r'^https://\w+\.python\.web\.id$',
 ]
 
-CORS_ALLOW_HEADERS=[
+CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
     'accept-language',
