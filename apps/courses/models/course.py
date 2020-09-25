@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.urls import reverse
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
@@ -52,6 +53,10 @@ class Exercise(TimeStampedModel):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        args = [self.course.slug, self.id]
+        return reverse('apps.courses:exercise_detail', args=args)
 
     def get_related_exercises(self):
         return self.__class__.objects.published()\

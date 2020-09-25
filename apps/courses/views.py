@@ -38,20 +38,32 @@ class CourseDetailView(DetailView):
         queries = {'slug': self.kwargs['slug'], 'deleted_at__isnull': True}
         return get_object_or_404(self.model, **queries)
 
-    def get_resume_exercise_id(self):
+    def get_resume_exercise_data(self):
+        """ function to setup the resume for exercise """
         session = self.request.session
-        if 'resume_exercise_id' in session:
-            return session.get('resume_exercise_id')
+        resume_exercise_data = {'resume_exercise_id': None, 'resume_exercise_order': 1}
 
-        exercise = self.object.get_exercises().first()
-        if exercise is not None:
-            session['resume_exercise_id'] = exercise.id
-            return session.get('resume_exercise_id')
-        return None
+        if 'resume_exercise_id' in session:
+            resume_exercise_data['resume_exercise_id'] = session.get('resume_exercise_id')
+
+        if 'resume_exercise_order' in session:
+            resume_exercise_data['resume_exercise_order'] = session.get('resume_exercise_order')
+
+        # setup newest session
+        if 'resume_exercise_id' not in session:
+            exercise = self.object.get_exercises().first()
+            if exercise is not None:
+                session['resume_exercise_id'] = exercise.id
+                session['resume_exercise_order'] = exercise.order
+
+                resume_exercise_data['resume_exercise_id'] = session['resume_exercise_id']
+                resume_exercise_data['resume_exercise_order'] = session['resume_exercise_order']
+
+        return resume_exercise_data
 
     def get_context_data(self, *args, **kwargs):
         context_data = super().get_context_data(*args, **kwargs)
-        context_data['resume_exercise_id'] = self.get_resume_exercise_id()
+        context_data.update(**self.get_resume_exercise_data())
         return context_data
 
 
@@ -84,13 +96,29 @@ class UserAnswerView(APIView):
             if isinstance(user_answer, str):
                 user_answer_clean = clean_code(user_answer.replace('\r', ''))
                 correct_answers = exercise.answer_set.published()
+
                 for canswer in correct_answers:
                     correct_answer = canswer.answer.replace('\r', '')
                     correct_answer_clean = clean_code(correct_answer)
 
                     if correct_answer_clean == user_answer_clean:
                         # assign into newest session
-                        self.request.session['resume_exercise_id'] = exercise.id
+
+                        # setup next exercise (to enable the button "Next")
+                        next_exercise = exercise.get_next_exercise()
+                        next_exercise_url = None
+                        resume_exercise_id = exercise.id
+                        resume_exercise_order = exercise.order
+
+                        if next_exercise is not None:
+                            resume_exercise_id = next_exercise.id
+                            resume_exercise_order = next_exercise.order
+                            args = [exercise.course.slug, next_exercise.id]
+                            next_exercise_url = reverse('apps.courses:exercise_detail', args=args)
+
+                        self.request.session['resume_exercise_id'] = resume_exercise_id
+                        self.request.session['resume_exercise_order'] = resume_exercise_order
+                        self.request.session['resume_next_exercise_url'] = next_exercise_url
 
                         return True
         return False
@@ -107,9 +135,14 @@ class UserAnswerView(APIView):
         is_correct = all([response_sandbox.get('success'), valid_answer])
         message = _('Success') if is_correct else _('Failed')
 
+        result = {
+            'console': response_sandbox.get('result'),
+            'resume_next_exercise_url': request.session.get('resume_next_exercise_url')
+        }
+
         response = {
             'status': status.HTTP_200_OK,
-            'result': response_sandbox.get('result'),
+            'result': result,
             'message': message,
             'success': is_correct
         }

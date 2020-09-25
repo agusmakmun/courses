@@ -116,18 +116,20 @@
             {% with exercise.get_prev_exercise as prev_exercise %}
               {% if prev_exercise %}
                 <a href="{% url 'apps.courses:exercise_detail' slug=exercise.course.slug id=prev_exercise.id %}" class="btn btn-lg btn-outline-info text-normal">{% trans "Previous" %}</a>
-              {% else %}
-                <a class="btn btn-lg btn-outline-info text-normal disabled">{% trans "Previous" %}</a>
               {% endif %}
             {% endwith %}
 
             <span>&nbsp;</span>
 
-            {% with exercise.get_next_exercise as next_exercise %}
-              {% if next_exercise %}
-                <a href="{% url 'apps.courses:exercise_detail' slug=exercise.course.slug id=next_exercise.id %}" class="btn btn-lg btn-outline-info text-normal">{% trans "Next" %}</a>
+            {% with request.session.resume_exercise_order as resume_exercise_order %}
+              {% if resume_exercise_order and resume_exercise_order > exercise.order %}
+                {% with exercise.get_next_exercise as next_exercise %}
+                  {% if next_exercise %}
+                    <a href="{% url 'apps.courses:exercise_detail' slug=exercise.course.slug id=next_exercise.id %}" class="btn btn-lg btn-outline-info text-normal btn-next-exercise">{% trans "Next" %}</a>
+                  {% endif %}
+                {% endwith %}
               {% else %}
-                <a class="btn btn-lg btn-outline-info text-normal disabled">{% trans "Next" %}</a>
+                <a class="btn btn-lg btn-outline-info text-normal btn-next-exercise disabled">{% trans "Next" %}</a>
               {% endif %}
             {% endwith %}
           </div>
@@ -209,19 +211,32 @@
           }),
           success: function(response) {
             console.log('RESPONSE', response); // { "success": true, "result": null }
-            const resultContent = response.result;
-            if(resultContent != 'undefined') {
-                var resultPrettyPrint = JSON.stringify(resultContent, undefined, 2);
-                var resultElemet;
-                if(resultContent != null) {
-                    if(resultContent.includes('\n')) {
-                      resultElemet = '<pre class="bash">' + resultContent + '</pre>'
-                    }else {
-                      resultElemet = '<pre class="bash">' + resultPrettyPrint + '</pre>'
-                    }
-                    consoleElementMain.html(resultElemet);
-                    highlightPre(); // call the highlight
-                }
+            const result = response.result;
+
+            if(result != 'undefined') {
+              const resultConsole = response.result.console;
+              const resultNextExerciseURL = response.result.resume_next_exercise_url;
+
+              if(resultConsole != 'undefined') {
+                  var resultPrettyPrint = JSON.stringify(resultConsole, undefined, 2);
+                  var resultElemet;
+                  if(resultConsole != null) {
+                      if(resultConsole.includes('\n')) {
+                        resultElemet = '<pre class="bash">' + resultConsole + '</pre>'
+                      }else {
+                        resultElemet = '<pre class="bash">' + resultPrettyPrint + '</pre>'
+                      }
+                      consoleElementMain.html(resultElemet);
+                      highlightPre(); // call the highlight
+                  }
+              }
+
+              // setup to enable the next button
+              if((resultNextExerciseURL != 'undefined') && (resultNextExerciseURL != null)) {
+                let btnNext = $('.btn-next-exercise');
+                btnNext.attr({'href': resultNextExerciseURL});
+                btnNext.removeClass('disabled');
+              }
             }
 
             // show the success & error notification
