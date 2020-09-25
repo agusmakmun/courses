@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import re
-
+from django.http import Http404
 from django.urls import reverse
 from django.conf import settings
 from django.utils import timezone
 from django.contrib import messages
 from django.db.models import (Q, F, Count)
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import (get_object_or_404, redirect)
 from django.views.generic import (ListView, DetailView)
@@ -76,7 +76,31 @@ class ExerciseDetailView(DetailView):
         queries = {'course__slug': self.kwargs['slug'],
                    'id': self.kwargs['id'],
                    'deleted_at__isnull': True}
-        return get_object_or_404(self.model, **queries)
+        exercise = get_object_or_404(self.model, **queries)
+
+        # makesure the user following the rules (by session)
+        # and not injecting into url only. for example:
+        # /courses/learn-python/exercise/1/console/ (not finished yet)
+        # /courses/learn-python/exercise/2/console/ (raise 404)
+        resume_exercise_order = self.request.session.get('resume_exercise_order', 1)
+        if resume_exercise_order >= exercise.order:
+            return exercise
+        raise Http404
+
+    def get_session_initial_script(self):
+        # check the session answer for current exercise
+        # when doesn't exist, setup into `initial_script`
+        session_user_answer = self.request.session.get('user_answer_exercise_%d' % self.object.id)
+        if session_user_answer:
+            user_answer = str(session_user_answer).replace('`', '\`')
+        else:
+            user_answer = self.object.initial_script.replace('`', '\`')
+        return mark_safe(user_answer)
+
+    def get_context_data(self, *args, **kwargs):
+        context_data = super().get_context_data(*args, **kwargs)
+        context_data['session_initial_script'] = self.get_session_initial_script()
+        return context_data
 
 
 class UserAnswerView(APIView):
@@ -128,10 +152,13 @@ class UserAnswerView(APIView):
         serializer.is_valid(raise_exception=True)
 
         exercise_id = serializer.data.get('exercise_id')
-        user_code = serializer.data.get('user_answer')
+        user_answer = serializer.data.get('user_answer')
 
-        response_sandbox = sandbox(user_code)  # {'success': <bool>, 'result': None}
-        valid_answer = self.validate_answer(exercise_id, user_code)
+        # assign the `user_answer` into new session.
+        request.session['user_answer_exercise_%d' % exercise_id] = user_answer
+
+        response_sandbox = sandbox(user_answer)  # {'success': <bool>, 'result': None}
+        valid_answer = self.validate_answer(exercise_id, user_answer)
         is_correct = all([response_sandbox.get('success'), valid_answer])
         message = _('Success') if is_correct else _('Failed')
 

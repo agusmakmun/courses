@@ -156,7 +156,7 @@
       highlightPre();
     });
 
-    var initialScript = `{{ exercise.initial_script|default:'' }}`;
+    var initialScript = `{{ session_initial_script|default:'' }}`;
 
     var editor = ace.edit('editor');
         editor.setTheme('ace/theme/twilight');
