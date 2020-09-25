@@ -87,19 +87,26 @@ class ExerciseDetailView(DetailView):
             return exercise
         raise Http404
 
+    def get_initial_script(self):
+        """ function to get the inital script """
+        # issue: https://stackoverflow.com/q/64056744/6396981
+        initial_script = self.object.initial_script.replace('`', '\`')
+        return mark_safe(initial_script)
+
     def get_session_initial_script(self):
         # check the session answer for current exercise
         # when doesn't exist, setup into `initial_script`
         session_user_answer = self.request.session.get('user_answer_exercise_%d' % self.object.id)
         if session_user_answer:
+            # issue: https://stackoverflow.com/q/64056744/6396981
             user_answer = str(session_user_answer).replace('`', '\`')
-        else:
-            user_answer = self.object.initial_script.replace('`', '\`')
-        return mark_safe(user_answer)
+            return mark_safe(user_answer)
+        return self.get_initial_script()
 
     def get_context_data(self, *args, **kwargs):
         context_data = super().get_context_data(*args, **kwargs)
         context_data['session_initial_script'] = self.get_session_initial_script()
+        context_data['initial_script'] = self.get_initial_script()
         return context_data
 
 
