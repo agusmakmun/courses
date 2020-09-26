@@ -115,43 +115,68 @@ class UserAnswerView(APIView):
     permission_classes = (permissions.AllowAny,)  # just for test
     serializer_class = UserAnswerSerializer
 
-    def validate_answer(self, exercise_id, user_answer):
+    def validate_answer(self, exercise_id, user_answer, response_sandbox):
         """
         function to makesure that `user_answer` is correct.
         :param `exercise_id` is integer id of exercise.
         :param `user_answer` is string user answer.
+        :param `response_sandbox` is dict of response sandbox.
         :return bool <True/False>
         """
         exercise = Exercise.objects.get_or_none(id=exercise_id)
         if exercise and user_answer:
             if isinstance(user_answer, str):
-                user_answer_clean = clean_code(user_answer.replace('\r', ''))
-                correct_answers = exercise.answer_set.published()
 
-                for canswer in correct_answers:
-                    correct_answer = canswer.answer.replace('\r', '')
-                    correct_answer_clean = clean_code(correct_answer)
+                answer_is_valid = False
+                output_is_valid = False
 
-                    if correct_answer_clean == user_answer_clean:
-                        # assign into newest session
+                # [1. answer validation]
+                if exercise.validate_answer:
+                    user_answer_clean = clean_code(user_answer.replace('\r', ''))
+                    correct_answers = exercise.answer_set.published()
 
-                        # setup next exercise (to enable the button "Next")
-                        next_exercise = exercise.get_next_exercise()
-                        next_exercise_url = None
-                        resume_exercise_id = exercise.id
-                        resume_exercise_order = exercise.order
+                    for canswer in correct_answers:
+                        correct_answer = canswer.answer.replace('\r', '')
+                        correct_answer_clean = clean_code(correct_answer)
 
-                        if next_exercise is not None:
-                            resume_exercise_id = next_exercise.id
-                            resume_exercise_order = next_exercise.order
-                            args = [exercise.course.slug, next_exercise.id]
-                            next_exercise_url = reverse('apps.courses:exercise_detail', args=args)
+                        if correct_answer_clean == user_answer_clean:
+                            answer_is_valid = True
+                            break  # stop the loop when correct
+                else:
+                    # this mean, if the `exercise.validate_answer` not checked
+                    # the validation of `valid_answer`, it assigned as valid.
+                    answer_is_valid = True
 
-                        self.request.session['resume_exercise_id'] = resume_exercise_id
-                        self.request.session['resume_exercise_order'] = resume_exercise_order
-                        self.request.session['resume_next_exercise_url'] = next_exercise_url
+                # [2. output validation]
+                if exercise.validate_output:
+                    if response_sandbox.get('result') == exercise.expected_output:
+                        output_is_valid = True
+                else:
+                    # this mean, if the `exercise.validate_output` not checked
+                    # the validation of `valid_answer`, it assigned as valid.
+                    output_is_valid = True
 
-                        return True
+                # setup newest session when all is valids.
+                if all([answer_is_valid, output_is_valid]):
+                    # assign into newest session
+                    # setup next exercise (to enable the button "Next")
+                    next_exercise = exercise.get_next_exercise()
+                    next_exercise_url = None
+                    resume_exercise_id = exercise.id
+                    resume_exercise_order = exercise.order
+
+                    if next_exercise is not None:
+                        resume_exercise_id = next_exercise.id
+                        resume_exercise_order = next_exercise.order
+                        args = [exercise.course.slug, next_exercise.id]
+                        next_exercise_url = reverse('apps.courses:exercise_detail', args=args)
+
+                    self.request.session['resume_exercise_id'] = resume_exercise_id
+                    self.request.session['resume_exercise_order'] = resume_exercise_order
+                    self.request.session['resume_next_exercise_url'] = next_exercise_url
+
+                    return True
+
         return False
 
     def post(self, request, format=None):
@@ -165,7 +190,7 @@ class UserAnswerView(APIView):
         request.session['user_answer_exercise_%d' % exercise_id] = user_answer
 
         response_sandbox = sandbox(user_answer)  # {'success': <bool>, 'result': None}
-        valid_answer = self.validate_answer(exercise_id, user_answer)
+        valid_answer = self.validate_answer(exercise_id, user_answer, response_sandbox)
         is_correct = all([response_sandbox.get('success'), valid_answer])
         message = _('Success') if is_correct else _('Failed')
 

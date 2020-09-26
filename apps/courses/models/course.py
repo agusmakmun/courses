@@ -49,6 +49,10 @@ class Exercise(TimeStampedModel):
     long_description = models.TextField(_('Long Description'))
     initial_script = models.TextField(_('Initial Script'), blank=True)
 
+    validate_answer = models.BooleanField(_('Validate Answer?'), default=True)
+    validate_output = models.BooleanField(_('Validate Output?'), default=False)
+    expected_output = models.TextField(_('Expected Output'), blank=True)
+
     objects = CustomManager()
 
     def __str__(self):
