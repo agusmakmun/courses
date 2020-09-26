@@ -64,20 +64,21 @@ class Exercise(TimeStampedModel):
 
     def get_related_exercises(self):
         return self.__class__.objects.published()\
-                                     .filter(course=self.course)
+                                     .filter(course=self.course)\
+                                     .exclude(id=self.id)
 
     def get_prev_exercise(self):
         """ function to get the previous exercise by order """
         return self.get_related_exercises()\
-                   .filter(order__lt=self.order)\
+                   .filter(order__lte=self.order)\
                    .order_by('-order')\
                    .first()
 
     def get_next_exercise(self):
         """ function to get the next exercise by order """
         return self.get_related_exercises()\
-                   .filter(order__gt=self.order)\
-                   .order_by('-order')\
+                   .filter(order__gte=self.order)\
+                   .order_by('order')\
                    .first()
 
     class Meta:
