@@ -234,17 +234,17 @@
                   }
               }
 
-              // setup to enable the next button
-              if((resultNextExerciseURL != 'undefined') && (resultNextExerciseURL != null)) {
-                let btnNext = $('.btn-next-exercise');
-                btnNext.attr({'href': resultNextExerciseURL});
-                btnNext.removeClass('disabled');
-              }
             }
 
             // show the success & error notification
             // this function coming from `/static/js/courses.js`
             if(response.success) {
+                // setup to enable the next button
+                if((resultNextExerciseURL != 'undefined') && (resultNextExerciseURL != null)) {
+                  let btnNext = $('.btn-next-exercise');
+                  btnNext.attr({'href': resultNextExerciseURL});
+                  btnNext.removeClass('disabled');
+                }
                 showNotif('{% trans "Great! Your answer is correct" %}', 'success', false);
             }else {
                 showNotif('{% trans "Upps! Your answer is incorrect" %}', 'error', false);
