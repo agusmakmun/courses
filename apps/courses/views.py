@@ -16,8 +16,8 @@ from rest_framework import (status, permissions)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.courses.models.course import (Course, Exercise, Answer)
-from apps.courses.serializers import UserAnswerSerializer
+from apps.courses.models.course import (Course, Exercise, ExpectedAnswer)
+from apps.courses.serializers import UserExpectedAnswerSerializer
 from apps.tools.python.cleaner import clean_code
 from apps.tools.python.exec import sandbox
 
@@ -96,11 +96,12 @@ class ExerciseDetailView(DetailView):
     def get_session_initial_script(self):
         # check the session answer for current exercise
         # when doesn't exist, setup into `initial_script`
-        session_user_answer = self.request.session.get('user_answer_exercise_%d' % self.object.id)
-        if session_user_answer:
+        session_key = 'user_answer_script_exercise_%d' % self.object.id
+        session_user_answer_script = self.request.session.get(session_key)
+        if session_user_answer_script:
             # issue: https://stackoverflow.com/q/64056744/6396981
-            user_answer = str(session_user_answer).replace('`', '\`')
-            return mark_safe(user_answer)
+            user_answer_script = str(session_user_answer_script).replace('`', '\`')
+            return mark_safe(user_answer_script)
         return self.get_initial_script()
 
     def get_context_data(self, *args, **kwargs):
@@ -110,47 +111,63 @@ class ExerciseDetailView(DetailView):
         return context_data
 
 
-class UserAnswerView(APIView):
+class UserExpectedAnswerView(APIView):
     allowed_methods = ('post',)
     permission_classes = (permissions.AllowAny,)  # just for test
-    serializer_class = UserAnswerSerializer
+    serializer_class = UserExpectedAnswerSerializer
 
-    def validate_answer(self, exercise_id, user_answer, response_sandbox):
+    def validate_script(self, exercise_id, user_answer_script, response_sandbox):
         """
-        function to makesure that `user_answer` is correct.
+        function to makesure that `user_answer_script` is correct.
         :param `exercise_id` is integer id of exercise.
-        :param `user_answer` is string user answer.
+        :param `user_answer_script` is string user answer (script).
         :param `response_sandbox` is dict of response sandbox.
         :return bool <True/False>
         """
         exercise = Exercise.objects.get_or_none(id=exercise_id)
-        if exercise and user_answer:
-            if isinstance(user_answer, str):
+        if exercise and user_answer_script:
+            if isinstance(user_answer_script, str):
+
+                expected_answers = exercise.expectedanswer_set.published()
+                user_answer_script_clean = clean_code(user_answer_script.replace('\r', ''))
 
                 answer_is_valid = False
                 output_is_valid = False
 
-                # [1. answer validation]
-                if exercise.validate_answer:
-                    user_answer_clean = clean_code(user_answer.replace('\r', ''))
-                    correct_answers = exercise.answer_set.published()
+                # [1. script validation]
+                if exercise.validate_script:
+                    for answer in expected_answers:
+                        expected_answer = answer.expected_script.replace('\r', '')
+                        expected_answer_clean = clean_code(expected_answer)
 
-                    for canswer in correct_answers:
-                        correct_answer = canswer.answer.replace('\r', '')
-                        correct_answer_clean = clean_code(correct_answer)
-
-                        if correct_answer_clean == user_answer_clean:
+                        if expected_answer_clean == user_answer_script_clean:
                             answer_is_valid = True
                             break  # stop the loop when correct
                 else:
-                    # this mean, if the `exercise.validate_answer` not checked
+                    # this mean, if the `exercise.validate_script` not checked
                     # the validation of `valid_answer`, it assigned as valid.
                     answer_is_valid = True
 
                 # [2. output validation]
                 if exercise.validate_output:
-                    if response_sandbox.get('result') == exercise.expected_output:
-                        output_is_valid = True
+                    user_answer_script_output = response_sandbox.get('result')
+                    run_expected_script = exercise.run_expected_script
+
+                    for answer in expected_answers:
+                        expected_output = answer.expected_output
+                        expected_script = answer.expected_script
+
+                        # get output from expected_script
+                        if run_expected_script:
+                            result_sandbox_expected = sandbox(expected_script).get('result')
+                            if user_answer_script_output == result_sandbox_expected:
+                                output_is_valid = True
+                                break  # stop the loop when correct
+                        else:
+                            if expected_output and (user_answer_script_output == expected_output):
+                                output_is_valid = True
+                                break  # stop the loop when correct
+
                 else:
                     # this mean, if the `exercise.validate_output` not checked
                     # the validation of `valid_answer`, it assigned as valid.
@@ -184,13 +201,13 @@ class UserAnswerView(APIView):
         serializer.is_valid(raise_exception=True)
 
         exercise_id = serializer.data.get('exercise_id')
-        user_answer = serializer.data.get('user_answer')
+        user_answer_script = serializer.data.get('user_answer_script')
 
-        # assign the `user_answer` into new session.
-        request.session['user_answer_exercise_%d' % exercise_id] = user_answer
+        # assign the `user_answer_script` into new session.
+        request.session['user_answer_script_exercise_%d' % exercise_id] = user_answer_script
 
-        response_sandbox = sandbox(user_answer)  # {'success': <bool>, 'result': None}
-        valid_answer = self.validate_answer(exercise_id, user_answer, response_sandbox)
+        response_sandbox = sandbox(user_answer_script)  # {'success': <bool>, 'result': None}
+        valid_answer = self.validate_script(exercise_id, user_answer_script, response_sandbox)
         is_correct = all([response_sandbox.get('success'), valid_answer])
         message = _('Success') if is_correct else _('Failed')
 

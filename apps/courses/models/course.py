@@ -49,9 +49,9 @@ class Exercise(TimeStampedModel):
     long_description = models.TextField(_('Long Description'))
     initial_script = models.TextField(_('Initial Script'), blank=True)
 
-    validate_answer = models.BooleanField(_('Validate Answer?'), default=True)
+    validate_script = models.BooleanField(_('Validate Script?'), default=True)
     validate_output = models.BooleanField(_('Validate Output?'), default=False)
-    expected_output = models.TextField(_('Expected Output'), blank=True)
+    run_expected_script = models.BooleanField(_('Run Expected Script?'), default=False)
 
     objects = CustomManager()
 
@@ -84,15 +84,20 @@ class Exercise(TimeStampedModel):
         ordering = ('-id',)
 
 
-class Answer(TimeStampedModel):
+class ExpectedAnswer(TimeStampedModel):
     id = models.BigAutoField(primary_key=True)
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
-    answer = models.TextField(_('Answer'), help_text=_('The correct answer'))
+    expected_script = models.TextField(_('Expected Script'), blank=True)
+    expected_output = models.TextField(_('Expected Output'), blank=True)
 
     objects = CustomManager()
 
     def __str__(self):
-        return self.answer[:50]
+        if self.expected_script:
+            return self.expected_script[:50]
+        elif self.expected_output:
+            return self.expected_output[:50]
+        return _('Expected output for %(exercise)s') % {'exercise': self.exercise}
 
     class Meta:
         ordering = ('-id',)

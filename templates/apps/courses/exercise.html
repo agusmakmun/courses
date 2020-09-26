@@ -210,7 +210,7 @@
           },
           data: JSON.stringify({
               'exercise_id': {{ exercise.id }},
-              'user_answer': editorValue
+              'user_answer_script': editorValue
           }),
           success: function(response) {
             console.log('RESPONSE', response); // { "success": true, "result": null }
